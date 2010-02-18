@@ -7,6 +7,7 @@
 //
 
 #import "MyCustomView.h"
+#import "math.h"
 
 #define kAccelerometerFrequency        10 //Hz
 
@@ -60,13 +61,14 @@
 	xField.text = [NSString stringWithFormat:@"%.5f", x];
 	yField.text = [NSString stringWithFormat:@"%.5f", y];
 	zField.text = [NSString stringWithFormat:@"%.5f", z];
+	NSLog(@"Wrote Fields");
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
 	NSLog(@"touches began count %d, %@", [touches count], touches);
 	
-	if([touches count] &gt; 1)
+	if([touches count] > 1)
 	{
 		twoFingers = YES;
 	}
@@ -78,6 +80,29 @@
 - (void) touchesMoved:(NSSet*)touches withEvent:(UIEvent*)event
 {
 	NSLog(@"touches moved count %d, %@", [touches count], touches);
+	
+	for (UITouch* touch in touches) 
+	{
+		CGPoint loc = [touch locationInView:self];
+		CGPoint prevloc = [touch previousLocationInView:self];
+		
+		CGRect rect = self.frame;
+		
+		CGFloat centerx = rect.size.width/2;
+		CGFloat centery = rect.size.height/2;
+		
+		CGFloat oppositeCurrent = loc.y - centery;
+		CGFloat adjacentCurrent = loc.x - centerx;
+		
+		CGFloat oppositePrevious = prevloc.y - centery;
+		CGFloat adjacentPrevious = prevloc.x - centerx;
+		
+		CGFloat currentAngle = atan(oppositeCurrent/adjacentCurrent);
+		CGFloat previousAngle = atan(oppositePrevious/adjacentPrevious);
+		
+		rotation += (currentAngle - previousAngle);
+		
+    }
 	
 	// tell the view to redraw
 	[self setNeedsDisplay];
@@ -111,7 +136,7 @@
 	CGContextTranslateCTM(context, centerx, centery);
 	
 	// Uncomment to see the rotated square
-	//CGContextRotateCTM(context, rotation);
+	CGContextRotateCTM(context, rotation);
 	
 	// Set red stroke
 	CGContextSetRGBStrokeColor(context, 1.0, 0.0, 0.0, 1.0);
