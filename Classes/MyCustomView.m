@@ -28,6 +28,8 @@
 	squareSize = 100.0f;
 	twoFingers = NO;
 	rotation = 0.5f;
+	initialDistance = 0;
+	
 	// You have to explicity turn on multitouch for the view
 	self.multipleTouchEnabled = YES;
 	
@@ -71,6 +73,13 @@
 	if([touches count] > 1)
 	{
 		twoFingers = YES;
+		
+		//Track the initial distance between two fingers.
+		UITouch *touch1 = [[touches allObjects] objectAtIndex:0];
+		UITouch *touch2 = [[touches allObjects] objectAtIndex:1];
+		
+		initialDistance = [self distanceBetweenTwoPoints:[touch1 locationInView:self] 
+												 toPoint:[touch2 locationInView:self]];
 	}
 	
 	// tell the view to redraw
@@ -81,28 +90,52 @@
 {
 	NSLog(@"touches moved count %d, %@", [touches count], touches);
 	
-	for (UITouch* touch in touches) 
+	if (twoFingers)
 	{
-		CGPoint loc = [touch locationInView:self];
-		CGPoint prevloc = [touch previousLocationInView:self];
+		//The image is being zoomed in or out.
 		
-		CGRect rect = self.frame;
+		UITouch *touch1 = [[touches allObjects] objectAtIndex:0];
+		UITouch *touch2 = [[touches allObjects] objectAtIndex:1];
 		
-		CGFloat centerx = rect.size.width/2;
-		CGFloat centery = rect.size.height/2;
+		//Calculate the distance between the two fingers.
+		CGFloat finalDistance = [self distanceBetweenTwoPoints:[touch1 locationInView:self]
+													   toPoint:[touch2 locationInView:self]];
 		
-		CGFloat oppositeCurrent = loc.y - centery;
-		CGFloat adjacentCurrent = loc.x - centerx;
-		
-		CGFloat oppositePrevious = prevloc.y - centery;
-		CGFloat adjacentPrevious = prevloc.x - centerx;
-		
-		CGFloat currentAngle = atan(oppositeCurrent/adjacentCurrent);
-		CGFloat previousAngle = atan(oppositePrevious/adjacentPrevious);
-		
-		rotation += (currentAngle - previousAngle);
-		
-    }
+		//Check if zoom in or zoom out.
+		if(initialDistance > finalDistance && squareSize > 10) 
+		{
+			squareSize-=5;
+		} 
+		else if (squareSize < 300) 
+		{
+			squareSize+=5;
+		}
+	}
+	else
+	{
+		for (UITouch* touch in touches) 
+		{
+			CGPoint loc = [touch locationInView:self];
+			CGPoint prevloc = [touch previousLocationInView:self];
+			
+			CGRect rect = self.frame;
+			
+			// Use the origin of the square along with trig to calculate rotation
+			CGFloat centerx = rect.size.width/2;
+			CGFloat centery = rect.size.height/2;
+			
+			CGFloat oppositeCurrent = loc.y - centery;
+			CGFloat adjacentCurrent = loc.x - centerx;
+			
+			CGFloat oppositePrevious = prevloc.y - centery;
+			CGFloat adjacentPrevious = prevloc.x - centerx;
+			
+			CGFloat currentAngle = atan(oppositeCurrent/adjacentCurrent);
+			CGFloat previousAngle = atan(oppositePrevious/adjacentPrevious);
+			
+			rotation += (currentAngle - previousAngle);
+		}
+	}
 	
 	// tell the view to redraw
 	[self setNeedsDisplay];
@@ -114,6 +147,7 @@
 	
 	// reset the var
 	twoFingers = NO;
+	initialDistance = -1;
 	
 	// tell the view to redraw
 	[self setNeedsDisplay];
@@ -144,11 +178,11 @@
 	// Set different based on multitouch
 	if(!twoFingers)
 	{
-		CGContextSetRGBFillColor(context, 0.0, 1.0, 0.0, 1.0);
+		CGContextSetRGBFillColor(context, 1.0, 0.0, 0.0, 1.0);
 	}
 	else
 	{
-		CGContextSetRGBFillColor(context, 0.0, 1.0, 1.0, 1.0);
+		CGContextSetRGBFillColor(context, 1.0, 1.0, 1.0, 1.0);
 	}
 	
 	// Draw a rect with a red stroke
@@ -162,6 +196,14 @@
 - (void) dealloc
 {
 	[super dealloc];
+}
+
+- (CGFloat)distanceBetweenTwoPoints:(CGPoint)fromPoint toPoint:(CGPoint)toPoint {
+	
+	float x = toPoint.x - fromPoint.x;
+	float y = toPoint.y - fromPoint.y;
+	
+	return sqrt(x * x + y * y);
 }
 
 @end

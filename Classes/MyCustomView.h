@@ -14,11 +14,14 @@
 	CGFloat                    squareSize;
 	CGFloat                    rotation;
 	CGColorRef                 aColor;
+	CGFloat                    initialDistance;
 	BOOL                       twoFingers;
 	
 	IBOutlet UILabel           *xField;
 	IBOutlet UILabel           *yField;
 	IBOutlet UILabel           *zField;
 }
+
+- (CGFloat)distanceBetweenTwoPoints:(CGPoint)fromPoint toPoint:(CGPoint)toPoint;
 
 @end
